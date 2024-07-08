@@ -1,12 +1,7 @@
 from model.schemas import MigrationDag,PurgeDag,DDLMigration,MetadataOrclMssqlDb2,CheckConnectionStatus,CheckConnectivity
 
-from fastapi import Depends, HTTPException
-
-from sqlalchemy.orm import Session
 from fastapi import FastAPI
-from db.database import engine
-from db.database import SessionLocal
-from model.model import metadata
+
 from model import model
 from datetime import datetime
 import logging
@@ -22,16 +17,6 @@ logging.basicConfig(level=logging.DEBUG)
 
 app=FastAPI()
 
-metadata.create_all(bind=engine)
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
 
 origins = ["*"]
 
@@ -46,7 +31,7 @@ app.add_middleware(
 
 
 @app.post("/metadata_orcl_mssql_db2")
-async def create_metadata_orcl_mssql_db2(metadata_orcl_mssql_db: MetadataOrclMssqlDb2, db: Session = Depends(get_db)):
+async def create_metadata_orcl_mssql_db2(metadata_orcl_mssql_db: MetadataOrclMssqlDb2):
     json_data = json.dumps(metadata_orcl_mssql_db.dict())
     input_data = json.loads(json_data)
     conn_info = input_data.get('connection_info')
@@ -56,7 +41,7 @@ async def create_metadata_orcl_mssql_db2(metadata_orcl_mssql_db: MetadataOrclMss
 
 
 @app.post("/check_connectivity")
-async def checkconnection(connection_info:CheckConnectivity, db: Session = Depends(get_db)):
+async def checkconnection(connection_info:CheckConnectivity):
     json_data = json.dumps(connection_info.dict())
     input_data = json.loads(json_data)
     conn_info = input_data.get('connection_info')
