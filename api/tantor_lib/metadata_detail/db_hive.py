@@ -1,6 +1,7 @@
 from pyhive import hive
 from logs.t_logging import logger
 
+
 class HiveConnectionManager:
     """
     This class manages connections to a Hive database and fetches metadata details.
@@ -17,11 +18,11 @@ class HiveConnectionManager:
         self.password = connection_info.get('password', '')
         self.auth_mode = 'LDAP' if self.password else 'NOSASL' 
         self.connection = None
-        err = self.create_connection()
-        if err:
-            raise Exception(f"Failed to connect to Hive: {err}")
+        result = self.create_connection()
+        if isinstance(result, Exception):
+            raise Exception(f"Failed to connect to Hive: {result}")
         else:
-            logger.info('Connection successful.')
+            logger.info(result)
 
     def create_connection(self):
         """Connect to the Hive database server."""
@@ -34,7 +35,8 @@ class HiveConnectionManager:
                 password=self.password if self.auth_mode == 'LDAP' else None,
                 auth=self.auth_mode
             )
-            return None
+            logger.debug("Connection established successfully.")
+            return "Connection successful"
         except Exception as e:
             logger.error(f"Failed to connect to Hive: {e}")
             return e

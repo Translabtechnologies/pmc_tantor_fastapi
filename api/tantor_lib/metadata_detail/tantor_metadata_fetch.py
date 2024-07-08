@@ -17,31 +17,9 @@ def generate_metadata_details(connection_info, table_name=None):
         results = []
         if connection_info['connection_type'] == 'oracle':
             oracle_connection = OracleConectionManger(connection_info)
-            print('-------->', table_name)
             temp_results = oracle_connection.metadata_details(table_name)
             oracle_connection.connection_close()
 
-        elif connection_info['connection_type'] == 'mssql':
-            print("----------=========================MSSQL========================-------")
-            mssql_connection = MsSqlConectionManger(connection_info)
-            temp_results = mssql_connection.metadata_details(table_name)
-            mssql_connection.connection_close()
-
-        elif connection_info['connection_type'] == 'db2':
-            db2_connection = Db2ConnectionManager(connection_info)
-            temp_results = db2_connection.metadata_details(table_name)
-            db2_connection.connection_close()
-
-        elif connection_info['connection_type'] == 'postgres':
-            postgres_connection = PostgresConectionManger(connection_info)
-            temp_results = postgres_connection.metadata_details(table_name)
-            postgres_connection.connection_close()
-
-        elif connection_info['connection_type'] == 'mysql':
-            mysql_connection = MySqlConectionManger(connection_info)
-            temp_results = mysql_connection.metadata_details(table_name)
-            mysql_connection.connection_close()
-        
         elif connection_info['connection_type'] == 'hive':
             hive_connection = HiveConnectionManager(connection_info)
             temp_results = hive_connection.metadata_details(table_name)
@@ -84,57 +62,49 @@ def compare_dict(d1,d2):
 def update_connection_metadata_table(results, endpoint_connection_metadata, table_name_metadata=None):
     list_table = []
     for post_data in results:
-        table_name = post_data['table_name']
+        table_name=post_data['table_name']           
         list_table.append(table_name)
         if table_name_metadata is not None:
-            if table_name in list(table_name_metadata.keys()):  # update the existing
+            if table_name in list(table_name_metadata.keys()):  # update The existing
                 metadata_info = table_name_metadata[table_name]
-                temp1 = {
-                    'column_json': metadata_info['column_json'],
-                    'constraint_json': metadata_info['constraint_json'],
-                    'index_json': metadata_info['index_json'],
-                    'partition_json': metadata_info['partition_json']
+                temp1={
+                    'column_json':metadata_info['column_json'],
+                    'constraint_json':  metadata_info['constraint_json'],
+                    'index_json':metadata_info['index_json'],
+                    'partition_json':metadata_info['partition_json']
                 }
-                temp2 = {
-                    'column_json': post_data['column_json'],
-                    'constraint_json': post_data['constraint_json'],
-                    'index_json': post_data['index_json'],
-                    'partition_json': post_data['partition_json']
+                temp2={
+                    'column_json':post_data['column_json'],
+                    'constraint_json':  post_data['constraint_json'],
+                    'index_json':post_data['index_json'],
+                    'partition_json':post_data['partition_json']
                 }
-                if compare_dict(temp1, temp2):
+                if compare_dict(temp1,temp2):
                     print(f"No change found in Metadata for table '{table_name}'")
                 else:
                     post_data["conn_metadata_id"] = metadata_info['conn_metadata_id']
                     url = f'{endpoint_connection_metadata}/{metadata_info["conn_metadata_id"]}'
-                    try:
-                        resp = requests.patch(url, data=json.dumps(post_data), headers=headers, verify=False)
-                        if resp.status_code == 204:
-                            print(f"Successfully updated metadata for table '{post_data['table_name']}'")
-                        else:
-                            print(f"Failed to update metadata for table '{post_data['table_name']}', Status Code: {resp.status_code}, Response: {resp.text}")
-                    except requests.exceptions.RequestException as e:
-                        print(f"Exception occurred while updating metadata for table '{post_data['table_name']}': {e}")
+                    resp = requests.patch(url, data=json.dumps(post_data), headers=headers, verify=False)
+                    if resp.status_code == 204:
+                        print(f"Succesfully update metadata for table '{post_data['table_name']}'")
+                    else:
+                        print(f"Failed to update metadata for table '{post_data['table_name']}'")
             else:  # insert the new one
                 url = f'{endpoint_connection_metadata}'
-                try:
-                    resp = requests.post(url, data=json.dumps(post_data), headers=headers, verify=False)
-                    if resp.status_code == 200:
-                        print(f"Successfully inserted metadata for table '{post_data['table_name']}'")
-                    else:
-                        print(f"Failed to insert metadata for table '{post_data['table_name']}', Status Code: {resp.status_code}, Response: {resp.text}")
-                except requests.exceptions.RequestException as e:
-                    print(f"Exception occurred while inserting metadata for table '{post_data['table_name']}': {e}")
-        else:  # insert the new one
-            url = f'{endpoint_connection_metadata}'
-            try:
                 resp = requests.post(url, data=json.dumps(post_data), headers=headers, verify=False)
                 if resp.status_code == 200:
-                    print(f"Successfully updated metadata for table '{post_data['table_name']}'")
+                        print(f"Succesfully Insert metadata for table '{post_data['table_name']}'")
                 else:
-                    print(f"Failed to update metadata for table '{post_data['table_name']}', Status Code: {resp.status_code}, Response: {resp.text}")
-            except requests.exceptions.RequestException as e:
-                print(f"Exception occurred while updating metadata for table '{post_data['table_name']}': {e}")
+                        print(f"Failed to insert metadata for table '{post_data['table_name']}'")
+        else:  # insert the new one
+            url = f'{endpoint_connection_metadata}'
+            resp = requests.post(url, data=json.dumps(post_data), headers=headers, verify=False)
+            if resp.status_code == 200:
+                print(f"Succesfully update metadata for table '{post_data['table_name']}'")
+            else:
+                print(f"Failed to update metadata for table '{post_data['table_name']}'")
     return list_table
+
 
 
 def update_connection_status(connection_info, endpoint_connection):
@@ -234,7 +204,6 @@ def delete_table_for_connection(conn_info, table_name):
 def test_connectivity(connection_info):
     if connection_info['connection_type'] == 'oracle':
         oracle_connection = OracleConectionManger(connection_info)
-        oracle_connection.connection_close()
     
     elif connection_info['connection_type'] == 'hive':
         hive_connection = HiveConnectionManager(connection_info)
